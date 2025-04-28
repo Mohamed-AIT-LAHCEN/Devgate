@@ -1,7 +1,6 @@
 <template>
   <nav>
-   <RouterLink to="/signUp">Sign Up</RouterLink>
-   <RouterLink to="/Login">Login</RouterLink>
+
   </nav>
   <router-view/>
 </template>
