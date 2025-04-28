@@ -19,7 +19,7 @@
 
 <script>
 import {auth} from '../firebase'
-import {signInWithEmailAndPassword, updateProfile} from 'firebase/auth'
+import {signInWithEmailAndPassword} from 'firebase/auth'
 import {ref} from 'vue'
 import router from '@/router'
 export default {
@@ -32,7 +32,7 @@ export default {
             await signInWithEmailAndPassword(auth, email.value, password.value)
             .then((userData) => {
                 const user = userData.user
-                return updateProfile(user, {displayName: name.value})
+                console.log(user)
             })
             .then(() => {
                 router.push('/')
