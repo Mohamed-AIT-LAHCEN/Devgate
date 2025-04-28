@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import signup from '../components/signUp.vue'
 import login from '../components/Login.vue'
 import project from '../components/projects.vue'
+import GestComp from '../components/GestComp.vue'
 
 const routes = [
   {
@@ -24,6 +25,11 @@ const routes = [
     path:'/AddProject',
     name:'addproject',
     component: project
+  }, 
+  {
+    path:'/GestComp',
+    name:'GestComp',
+    component: GestComp
   }
   
 ]
