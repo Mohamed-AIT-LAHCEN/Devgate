@@ -1,9 +1,10 @@
 <template>
   <div class="home">
-    <RouterLink to="/signUp">Sign Up</RouterLink>
-    <RouterLink to="/Login">Login</RouterLink>
-   <RouterLink to="/AddProject">Add Project</RouterLink>
-   <div v-if="user">Hello {{user.displayName}} Ksiks</div>
+    <RouterLink to="/signUp">Sign Up</RouterLink> |
+    <RouterLink to="/Login">Login</RouterLink>|
+   <RouterLink to="/AddProject">Add Project</RouterLink>|
+   <RouterLink to="/GestComp">Gestion des compétences</RouterLink>|
+   <div v-if="user">Hello {{user.displayName}} </div>
   </div>
   <router-view/>
 </template>
