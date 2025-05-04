@@ -104,7 +104,7 @@ import {ref, onMounted} from 'vue'
 import {db, auth} from '../firebase'
 import {addDoc, collection, getDocs, query, where, doc, updateDoc, deleteDoc} from 'firebase/firestore' 
 import {onAuthStateChanged} from 'firebase/auth'
-import { logTimelineAction } from './Timeline.vue'
+import { logTimelineAction } from '../utils/timeline'
 
 export default {
     name: 'SkillsManagement',
