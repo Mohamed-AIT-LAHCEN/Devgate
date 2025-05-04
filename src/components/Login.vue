@@ -16,21 +16,27 @@
         </div>
         <div v-if="error" class="error-message">{{ error }}</div>
       </form>
+      <div class="text-center mt-3">
+        <button class="btn btn-outline-secondary" @click="goToSignup">Create Account</button>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import router from '@/router'
 import {auth} from '../firebase'
 import {signInWithEmailAndPassword} from 'firebase/auth'
 import {ref} from 'vue'
+import { useRouter } from 'vue-router'
+
 export default {
   name: 'LoginPage',
   setup() {
     const email = ref("")
     const password = ref("")
     const error = ref("")
+    const router = useRouter()
+
     const login = async () => {
       error.value = ""
       try {
@@ -47,11 +53,17 @@ export default {
         error.value = err.message
       }
     }
+
+    function goToSignup() {
+      router.push('/inscription')
+    }
+
     return {
       email,
       password,
       error,
-      login
+      login,
+      goToSignup
     }
   }
 }

@@ -72,7 +72,7 @@ import {auth} from '../firebase'
 import {query, where, getDocs} from 'firebase/firestore'
 import {onAuthStateChanged} from 'firebase/auth'
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { logTimelineAction } from './Timeline.vue'
+import { logTimelineAction } from '../utils/timeline'
 export default {
     name: 'ProjectsView',
     setup() {
@@ -132,32 +132,41 @@ export default {
                 if (imageFile.value) {
                     try {
                         const storage = getStorage();
-                        const imgRef = storageRef(storage, `projects/${Date.now()}_${imageFile.value.name}`);
-                        await uploadBytes(imgRef, imageFile.value);
-                        url = await getDownloadURL(imgRef);
+                        const imgRef = storageRef(storage, `projects/${auth.currentUser.uid}/${Date.now()}_${imageFile.value.name}`);
+                        const snapshot = await uploadBytes(imgRef, imageFile.value);
+                        url = await getDownloadURL(snapshot.ref);
                     } catch (imgErr) {
-                        error.value = 'Erreur lors de l\'upload de l\'image : ' + imgErr.message;
+                        console.error('Erreur upload image:', imgErr);
+                        error.value = 'Erreur lors de l\'upload de l\'image. Veuillez réessayer.';
                         return;
                     }
                 }
-                await addDoc(collection(db, 'projects'), {
+
+                const projectData = {
                     title: title.value,
                     description: description.value,
                     stacks: stacks.value,
                     github: github.value,
                     imageUrl: url,
-                    userId: auth.currentUser.uid
-                })
+                    userId: auth.currentUser.uid,
+                    createdAt: new Date()
+                };
+
+                const docRef = await addDoc(collection(db, 'projects'), projectData);
+                console.log('Projet créé avec ID:', docRef.id);
+
                 await logTimelineAction({
                     userId: auth.currentUser.uid,
                     type: 'Ajout projet',
                     description: `Ajout du projet ${title.value}`
-                })
+                });
+
                 resetForm();
                 formVisible.value = false;
-                getUserProjects();
+                await getUserProjects();
             } catch (err) {
-                error.value = 'Erreur lors de l\'ajout du projet (hors image) : ' + err.message;
+                console.error('Erreur création projet:', err);
+                error.value = 'Erreur lors de l\'ajout du projet. Veuillez réessayer.';
             }
         }
         const getUserProjects = async () => {
@@ -188,32 +197,41 @@ export default {
                 if (imageFile.value) {
                     try {
                         const storage = getStorage();
-                        const imgRef = storageRef(storage, `projects/${Date.now()}_${imageFile.value.name}`);
-                        await uploadBytes(imgRef, imageFile.value);
-                        url = await getDownloadURL(imgRef);
+                        const imgRef = storageRef(storage, `projects/${auth.currentUser.uid}/${Date.now()}_${imageFile.value.name}`);
+                        const snapshot = await uploadBytes(imgRef, imageFile.value);
+                        url = await getDownloadURL(snapshot.ref);
                     } catch (imgErr) {
-                        error.value = 'Erreur lors de l\'upload de l\'image : ' + imgErr.message;
+                        console.error('Erreur upload image:', imgErr);
+                        error.value = 'Erreur lors de l\'upload de l\'image. Veuillez réessayer.';
                         return;
                     }
                 }
+
                 const proj = projects.value[editingIndex.value];
-                await updateDoc(doc(db, 'projects', proj.id), {
+                const updateData = {
                     title: title.value,
                     description: description.value,
                     stacks: stacks.value,
                     github: github.value,
-                    imageUrl: url
-                });
+                    imageUrl: url,
+                    updatedAt: new Date()
+                };
+
+                await updateDoc(doc(db, 'projects', proj.id), updateData);
+                console.log('Projet mis à jour:', proj.id);
+
                 await logTimelineAction({
                     userId: auth.currentUser.uid,
                     type: 'Modification projet',
                     description: `Modification du projet ${title.value}`
-                })
+                });
+
                 resetForm();
                 formVisible.value = false;
-                getUserProjects();
+                await getUserProjects();
             } catch (err) {
-                error.value = 'Erreur lors de la mise à jour du projet : ' + err.message;
+                console.error('Erreur mise à jour projet:', err);
+                error.value = 'Erreur lors de la mise à jour du projet. Veuillez réessayer.';
             }
         }
         const deleteProject = async (id) => {

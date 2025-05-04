@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import Home from '../views/Home.vue'
 import signup from '../components/signUp.vue'
 import login from '../components/Login.vue'
 import project from '../components/projects.vue'
@@ -7,12 +7,13 @@ import GestComp from '../components/GestComp.vue'
 import UserTimeline from '../components/Timeline.vue'
 import UserObjectives from '../components/Objectives.vue'
 import ProfileView from '../components/Dashbord.vue'
+import UserProfile from '../components/UserProfile.vue'
 
 const routes = [
   {
     path: '/',
     name: 'home',
-    component: HomeView
+    component: Home
   },
   {
     path: '/signUp',
@@ -48,6 +49,12 @@ const routes = [
     path: '/dashboard',
     name: 'dashboard',
     component: ProfileView
+  },
+  {
+    path: '/profile/:userId',
+    name: 'UserProfile',
+    component: UserProfile,
+    props: true
   }
 ]
 

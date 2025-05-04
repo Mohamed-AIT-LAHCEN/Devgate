@@ -77,11 +77,12 @@
 </template>
 
 <script>
-import {ref, onMounted} from 'vue'
-import {auth, db} from '../firebase'
-import {collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc} from 'firebase/firestore'
-import {onAuthStateChanged} from 'firebase/auth'
-import { logTimelineAction } from './Timeline.vue'
+import { ref, onMounted } from 'vue';
+import { db, auth } from '../firebase';
+import { addDoc, collection, getDocs, query, where, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
+import { logTimelineAction } from '../utils/timeline';
+
 export default {
   name: 'UserObjectives',
   setup() {
@@ -91,43 +92,67 @@ export default {
     const status = ref("En cours")
     const editingIndex = ref(-1)
     const formVisible = ref(false)
+    const error = ref("")
+
     const fetchObjectives = async (uid) => {
       objectives.value = [];
       const q = query(collection(db, 'objectives'), where('userId', '==', uid));
       const querySnapshot = await getDocs(q);
       querySnapshot.forEach(docSnap => objectives.value.push({id: docSnap.id, ...docSnap.data()}));
     }
+
     const resetForm = () => {
       title.value = "";
       description.value = "";
       status.value = "En cours";
       editingIndex.value = -1;
+      error.value = "";
     }
+
     const showAddForm = () => {
       resetForm();
       formVisible.value = true;
     }
+
     const hideForm = () => {
       resetForm();
       formVisible.value = false;
     }
+
     const addObjective = async () => {
-      if (!auth.currentUser) return;
-      await addDoc(collection(db, 'objectives'), {
-        title: title.value,
-        description: description.value,
-        status: status.value,
-        userId: auth.currentUser.uid
-      })
-      await logTimelineAction({
-        userId: auth.currentUser.uid,
-        type: 'Ajout objectif',
-        description: `Ajout de l'objectif ${title.value}`
-      })
-      resetForm();
-      formVisible.value = false;
-      fetchObjectives(auth.currentUser.uid)
+      error.value = "";
+      if (!auth.currentUser) {
+        error.value = 'Vous devez être connecté pour ajouter un objectif.';
+        return;
+      }
+
+      try {
+        const objectiveData = {
+          title: title.value,
+          description: description.value,
+          status: status.value,
+          userId: auth.currentUser.uid,
+          createdAt: new Date()
+        };
+
+        const docRef = await addDoc(collection(db, 'objectives'), objectiveData);
+        console.log('Objectif créé avec ID:', docRef.id);
+
+        await logTimelineAction({
+          userId: auth.currentUser.uid,
+          type: 'Ajout objectif',
+          description: `Ajout de l'objectif ${title.value}`
+        });
+
+        resetForm();
+        formVisible.value = false;
+        await fetchObjectives(auth.currentUser.uid);
+      } catch (err) {
+        console.error('Erreur création objectif:', err);
+        error.value = 'Erreur lors de l\'ajout de l\'objectif. Veuillez réessayer.';
+      }
     }
+
     const editObjective = (idx) => {
       editingIndex.value = idx;
       const obj = objectives.value[idx];
@@ -136,23 +161,38 @@ export default {
       status.value = obj.status;
       formVisible.value = true;
     }
+
     const updateObjective = async () => {
+      error.value = "";
       if (editingIndex.value === -1) return;
-      const obj = objectives.value[editingIndex.value];
-      await updateDoc(doc(db, 'objectives', obj.id), {
-        title: title.value,
-        description: description.value,
-        status: status.value
-      })
-      await logTimelineAction({
-        userId: auth.currentUser.uid,
-        type: 'Modification objectif',
-        description: `Modification de l'objectif ${title.value}`
-      })
-      resetForm();
-      formVisible.value = false;
-      fetchObjectives(auth.currentUser.uid)
+
+      try {
+        const obj = objectives.value[editingIndex.value];
+        const updateData = {
+          title: title.value,
+          description: description.value,
+          status: status.value,
+          updatedAt: new Date()
+        };
+
+        await updateDoc(doc(db, 'objectives', obj.id), updateData);
+        console.log('Objectif mis à jour:', obj.id);
+
+        await logTimelineAction({
+          userId: auth.currentUser.uid,
+          type: 'Modification objectif',
+          description: `Modification de l'objectif ${title.value}`
+        });
+
+        resetForm();
+        formVisible.value = false;
+        await fetchObjectives(auth.currentUser.uid);
+      } catch (err) {
+        console.error('Erreur mise à jour objectif:', err);
+        error.value = 'Erreur lors de la mise à jour de l\'objectif. Veuillez réessayer.';
+      }
     }
+
     const deleteObjective = async (id) => {
       const obj = objectives.value.find(o => o.id === id);
       await deleteDoc(doc(db, 'objectives', id));
@@ -160,15 +200,17 @@ export default {
         userId: auth.currentUser.uid,
         type: 'Suppression objectif',
         description: `Suppression de l'objectif ${obj ? obj.title : ''}`
-      })
-      fetchObjectives(auth.currentUser.uid)
+      });
+      fetchObjectives(auth.currentUser.uid);
     }
+
     onMounted(() => {
       onAuthStateChanged(auth, (u) => {
         if (u) fetchObjectives(u.uid);
       })
     })
-    return { objectives, title, description, status, addObjective, editObjective, updateObjective, deleteObjective, editingIndex, formVisible, showAddForm, hideForm }
+
+    return { objectives, title, description, status, addObjective, editObjective, updateObjective, deleteObjective, editingIndex, formVisible, showAddForm, hideForm, error }
   }
 }
 </script> 
